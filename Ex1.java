@@ -11,7 +11,20 @@ public class Ex1 {
 
     public static void main(String[] args) {
         File file = new File("input.txt");
+        String output_path = "output.txt";
         BayesNet bayesNet = null;
+        VariableElimination ve = new VariableElimination();
+
+        if (args.length == 2) {
+            file = new File(args[0]);
+            output_path = args[1];
+        } else {
+            System.err.println("Invalid number of arguments. Please provide the input file path.");
+            return;
+        }
+
+        File outputFile = new File(output_path);
+
         //read the queries from the file
         try {
             BufferedReader br = new BufferedReader(new FileReader(file));
@@ -29,18 +42,26 @@ public class Ex1 {
                     System.out.println("Outcomes: " + node.getOutcomes());
                     System.out.println("Parents: " + node.getParents());
                     System.out.println("Children: " + node.getChildren());
-                    System.out.println("Factor: " + node.getFactor());
-                    node.getFactor().printFactor();
                 }
             }else{
                 System.err.println("The first line of the input file should be the name of the XML file.");
                 return;
             }
             //get all the queries
-            while ((st = br.readLine()) != null) {
+            BufferedWriter BW = new BufferedWriter(new FileWriter(outputFile));
+            while ((st = br.readLine()) != null) {                                  // variable elimination
                 System.out.println(st);
                 if(st.contains("P(")){
-                    System.out.println("Variable elimination");
+                    //clone the bayesNet
+                    BayesNet bayesNetClone = bayesNet.clone();
+                    float veResult = ve.Call(bayesNetClone,st);
+                    veResult = Math.round(veResult * 100000f) / 100000f;
+                    String StrResult = veResult + "0000000";
+//                    System.out.println(StrResult.substring(0, 7) + "," + ve.sumOperations + "," + ve.mulOperations);
+                    BW.write(StrResult.substring(0, 7) + "," + ve.sumOperations + "," + ve.mulOperations);
+
+
+
 
                 }else{                                                              //Bayes Ball
                     String[] given = {};
@@ -56,7 +77,9 @@ public class Ex1 {
                             given[i] = given[i].substring(0, given[i].indexOf("="));
                         }
                     }
-                    System.out.println(bayesNet.isIndependent(startAndStop[0],startAndStop[1],given));
+//                    System.out.println(bayesNet.isIndependent(startAndStop[0],startAndStop[1],given));
+                    BW.write(bayesNet.isIndependent(startAndStop[0],startAndStop[1],given)+"");
+
 
 
                 }

@@ -28,6 +28,14 @@ public class BayesNet {
     public HashSet<BayesNode> getNodes() {
         return nodes;
     }
+
+    public BayesNet clone() {
+        BayesNet clone = new BayesNet();
+        for (BayesNode node : this.getNodes()) {
+            clone.addNode(node);
+        }
+        return clone;
+    }
     /*_________________________________________ Bayes ball area______________________________________________________*/
     //B-E|J=T or B-E|J=T,M=T... or B-E|
     // dose B independent of E given J=T or given J=T,M=T... or given nothing
@@ -104,26 +112,46 @@ public class BayesNet {
 
     /*_________________________________________ variable elimination area______________________________________________________*/
     // 1. make a list of the nodes just parents of the query node and given nodes
-    public double variableElimination(String[] given, BayesNode query) {
-        // make a list of the nodes just parents of the query node and given nodes
-        HashSet<BayesNode> variables = new HashSet<BayesNode>();
-        for(String givenNode : given){
-            variables = addParentsAndMe(this.getNode(givenNode), variables);
+//    public Float nodesReduction(String[] given, BayesNode query) {
+//        // make a list of the nodes just parents of the query node and given nodes
+//        HashSet<BayesNode> variables = new HashSet<BayesNode>();
+//        for(String givenNode : given){
+//            variables = addParentsAndMe(this.getNode(givenNode), variables);
+//        }
+//        variables = addParentsAndMe(query, variables);
+//
+//
+//        // 2. remove the independent nodes from the list using bayes ball
+//        for(BayesNode node : variables){
+//            if(isIndependent(query.getName(), node.getName(), given)){
+//                variables.remove(node);
+//            }
+//        }
+//        // 3.
+//
+//        return
+//    }
+    void given_update(String query) {
+        // extracting the Given part
+        String[] givenString = query.split("\\|");
+        if (givenString.length == 1) {
+            return;
         }
-        variables = addParentsAndMe(query, variables);
-
-
-        // 2. remove the independent nodes from the list using bayes ball
-        for(BayesNode node : variables){
-            if(isIndependent(query.getName(), node.getName(), given)){
-                variables.remove(node);
+        String givenPart = givenString[1];
+        givenPart = givenPart.split("\\)")[0];
+        for (String given : givenPart.split(",")) {
+            if (given.isEmpty()) {
+                break;
             }
+            String node = given.split("=")[0];
+            String value = given.split("=")[1];
+            value = value.split("\\)")[0];
+
+            BayesNode current_node = this.getNode(node);
+            current_node.isGiven = true;
+            current_node.givenOutcome = value;
         }
-        // 3.
-
-        return
     }
-
 
     //
 public HashSet<BayesNode> addParentsAndMe( BayesNode node , HashSet<BayesNode> parents){
@@ -150,5 +178,9 @@ public HashSet<BayesNode> addParentsAndMe( BayesNode node , HashSet<BayesNode> p
     }
 
 
-
+    public void refresh() {
+        for (BayesNode node : nodes) {
+            node.factor = new Factor(node.Cpt, node);
+        }
+    }
 }

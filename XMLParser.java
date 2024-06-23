@@ -15,6 +15,7 @@ import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import java.util.ArrayList;
 
 public class XMLParser {
     //variables
@@ -69,6 +70,7 @@ public class XMLParser {
         nList = root.getElementsByTagName("DEFINITION");
         // go over all the "DEFINITION" tags and fill the CPT of the nodes
         for(int i = 0; i < nList.getLength(); i++){                                         // go over all the nodes
+            ArrayList<BayesNode> Variables = new ArrayList<>();
             Element nodeElement = (Element) nList.item(i);
             for(int j = 0; j < nodeElement.getChildNodes().getLength(); j++) {               // go over all the tags of the node
                 if (nodeElement.getChildNodes().item(j).getNodeName() == "FOR") {
@@ -80,15 +82,17 @@ public class XMLParser {
                             BayesNode parent = bayesNet.getNode(parentName);                     // get the parent node
                             node.addParent(parent);
                             parent.addChild(node);
-                            //TODO: add the CHILDREN to the node
+                            Variables.add(bayesNet.getNode(parentName));
                         }
                         if (nodeElement.getChildNodes().item(k).getNodeName() == "TABLE") {
                             String table = nodeElement.getChildNodes().item(k).getTextContent();
                             String[] tableArray = table.split(" ");
-                            Factor thisFactor = new Factor(tableArray, node);
-                            node.setFactor(thisFactor);
+                            Factor thisFactor = new Factor(tableArray, node,Variables);
+                            node.Cpt = thisFactor;
+
                         }
                     }
+                    Variables.add(bayesNet.getNode(nodeName));
                 }
             }
         }

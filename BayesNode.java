@@ -8,9 +8,10 @@ public class BayesNode {
     private ArrayList<String> outcomes = new ArrayList<String>();   // .length = number of outcomes
     private ArrayList<BayesNode> parents = new ArrayList<BayesNode>();
     private ArrayList<BayesNode> children = new ArrayList<BayesNode>();
-    private Factor factor;    // Factor of the node (will be minimized in variable elimination)
-    private Factor Cpt;      // Conditional Probability Table as given in the XML
+    Factor factor;    // Factor of the node (will be minimized in variable elimination)
+    Factor Cpt;      // Conditional Probability Table as given in the XML
     public boolean isGiven = false;
+    public String givenOutcome = "";
 
     //constructor
     public BayesNode(String name){
@@ -27,6 +28,14 @@ public class BayesNode {
     public void addChild(BayesNode child){
         children.add(child);
     }
+    public void collapse_given(BayesNode node, String givenVal){
+        System.out.println("factor before collapse: ");
+        factor.printFactor();
+        this.factor.updateGiven(givenVal, node);
+        System.out.println("factor after collapse: ");
+        factor.printFactor();
+    }
+
 
     //getters and setters
     public String getName(){
