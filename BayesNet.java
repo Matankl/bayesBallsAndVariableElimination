@@ -1,7 +1,6 @@
 // this it the class contains the bayesian network
 // it contains the nodes of the network
 
-import java.util.ArrayList;
 import java.util.HashSet;
 
 
@@ -131,7 +130,7 @@ public class BayesNet {
 //
 //        return
 //    }
-    void given_update(String query) {
+    void givenUpdate(String query) {
         // extracting the Given part
         String[] givenString = query.split("\\|");
         if (givenString.length == 1) {

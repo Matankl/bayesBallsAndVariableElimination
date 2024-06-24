@@ -54,7 +54,7 @@ public class Ex1 {
                 if(st.contains("P(")){
                     //clone the bayesNet
                     BayesNet bayesNetClone = bayesNet.clone();
-                    float veResult = ve.Call(bayesNetClone,st);
+                    float veResult = ve.VECall(bayesNetClone,st);
                     veResult = Math.round(veResult * 100000f) / 100000f;
                     String StrResult = veResult + "0000000";
 //                    System.out.println(StrResult.substring(0, 7) + "," + ve.sumOperations + "," + ve.mulOperations);

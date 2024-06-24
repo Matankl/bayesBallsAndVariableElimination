@@ -3,8 +3,7 @@ import java.util.ArrayList;
 
 
 /**
- * MIGHT NEED TO CHANGE:
- * String[] given = {} in method bayesBallElimination this is a patch to not give the actual given values because I marked them before
+ * The class that contains the variable elimination algorithm
  */
 public class VariableElimination {
 
@@ -17,7 +16,7 @@ public class VariableElimination {
     int sumOperations = 0;
     int mulOperations = 0;
 
-    public Float Call(BayesNet network, String query) {
+    public Float VECall(BayesNet network, String query) {
         // Resetting the network
         resetVE(network);
 
@@ -25,18 +24,16 @@ public class VariableElimination {
         ProcessQueryString(network, query);
 
         // updating the node of their given state                                         V
-        network.given_update(query);
+        network.givenUpdate(query);
 
         // First step - getting rid of the non-parent of query or evidence nodes          V
-        this.eliminate_useless_nodes();
+        this.eliminateUselessNodes();
 
         // Second step - Keeping only relevant nodes using bayes ball                     V
         BBElimination(network);
 
-
         // Third step - Actually eliminating the variables
-        Factor result = this.eliminate_variables();
-
+        Factor result = this.eliminateVariables();
 
         // creating a key to get the result from the hash map
         ArrayList<String> key = new ArrayList<>();
@@ -46,6 +43,10 @@ public class VariableElimination {
         return result.getFactorTable().get(key);
     }
 
+    /**
+     * Reset the variables of the variable elimination algorithm
+     * @param network the network to reset
+     */
     private void resetVE(BayesNet network) {
         network.refresh();
         this.mulOperations = 0;
@@ -80,9 +81,9 @@ public class VariableElimination {
      * Normalize the factor to have a sum of probabilities equal to 1
      * @param result the factor to normalize
      */
-    private void Normalizing_factor(Factor result) {
+    private void normalizingFactor(Factor result) {
         float sum = 0;
-        this.sumOperations += result.getFactorTable().size() -1;
+        this.sumOperations += result.getFactorTable().size() - 1;
         for (ArrayList<String> key : result.getFactorTable().keySet()) {
             sum += result.getFactorTable().get(key);
         }
@@ -95,14 +96,14 @@ public class VariableElimination {
      * Eliminate the variables using the variable elimination algorithm
      * @return the factor containing the result
      */
-    private Factor eliminate_variables() {
+    private Factor eliminateVariables() {
 
         // First step - reducing the variables by evidences
         System.out.println("Relevant nodes: ");
         for (BayesNode node : this.RelevantNodes) {
             System.out.println(node.getName());
         }
-        this.given_reduction();
+        this.givenReduction();
         System.out.println("Relevant nodes: ");
         for (BayesNode node : this.RelevantNodes) {
             System.out.println(node.getName());
@@ -110,9 +111,9 @@ public class VariableElimination {
 
         // Checking if the query is already computed
         int total = 0;
-        for (BayesNode node : this.RelevantNodes){
-            if (node.factor.getVariables().contains(this.queryNode)){
-                total ++;
+        for (BayesNode node : this.RelevantNodes) {
+            if (node.factor.getVariables().contains(this.queryNode)) {
+                total++;
             }
         }
         if (total == 1 && this.queryNode.factor.getFactorTable().size() == 2) {
@@ -120,12 +121,12 @@ public class VariableElimination {
         }
 
         // Second step - reducing the variables by hidden variables
-        Factor result = this.hidden_reduction();
+        Factor result = this.hiddenReduction();
 
         // Third step returning the Normalized output
         System.out.println("Result factor before normalization: ");
         result.printFactor();
-        Normalizing_factor(result);
+        normalizingFactor(result);
         System.out.println("Result factor after normalization: ");
         result.printFactor();
         return result;
@@ -136,10 +137,10 @@ public class VariableElimination {
      * Reduce the hidden variables one by one
      * @return the factor containing the result
      */
-    private Factor hidden_reduction() {
+    private Factor hiddenReduction() {
         // Get all the nodes cpt variables
-        ArrayList<Factor> factors = this.get_relevant_factors(); // the list containing all the factors that are relevant to the query
-        ArrayList<Factor> temp_factors; // the list containing all the factors that contains the wanted parameter
+        ArrayList<Factor> factors = this.getRelevantFactors(); // the list containing all the factors that are relevant to the query
+        ArrayList<Factor> tempFactors; // the list containing all the factors that contains the wanted parameter
 
         System.out.println(this.HiddenNodes.size() + " hidden nodes");
         // print all the hidden nodes
@@ -148,48 +149,49 @@ public class VariableElimination {
         }
         for (BayesNode node : this.HiddenNodes) { // for each hidden node
             // Get all the Factors containing the node name
-            temp_factors = this.get_relevant_factors(node, factors);
+            tempFactors = this.getRelevantFactors(node, factors);
             // sort the factors by their size
             Comparator<Factor> comp = new FactorComparator();
-            temp_factors.sort(comp);
+            tempFactors.sort(comp);
             // Join the factors recursively
-            Factor last_factor = this.join(temp_factors, factors);
+            Factor lastFactor = this.factorJoin(tempFactors, factors);
             // Reduce the remaining factor
-            if (last_factor != null) {
-                if (last_factor.getVariables().size() != 1) {
+            if (lastFactor != null) {
+                if (lastFactor.getVariables().size() != 1) {
                     System.out.println("Sum operations before reduction: " + this.sumOperations);
                     System.out.println("Reducing the last factor: ");
-                    last_factor.printFactor();
-                    this.sumOperations += last_factor.removeNode(node);
+                    lastFactor.printFactor();
+                    this.sumOperations += lastFactor.removeNode(node);
                     System.out.println("Reduced factor: ");
                     System.out.println("Sum operations after reduction: " + this.sumOperations);
-                    last_factor.printFactor();
+                    lastFactor.printFactor();
                 } else {
-                    factors.remove(last_factor);
+                    factors.remove(lastFactor);
                 }
             }
         }
 
-        this.join(factors, factors); // last join with the query node
+        this.factorJoin(factors, factors); // last join with the query node
         return factors.get(0); // return the last factor containing the query variable
     }
 
     /**
      * Join the factors recursively
-     * @param factors the list of factors to join
-     * @param all_factors the list of all the factors
+     *
+     * @param factors    the list of factors to join
+     * @param allFactors the list of all the factors
      * @return the new factor
      */
-    private Factor join(ArrayList<Factor> factors, ArrayList<Factor> all_factors) {
+    private Factor factorJoin(ArrayList<Factor> factors, ArrayList<Factor> allFactors) {
 
         // if there is no factor left
-        if (factors.isEmpty()){
+        if (factors.isEmpty()) {
             return null;
         }
         // if there is only one factor left
         if (factors.size() == 1) {
-            if (!all_factors.contains(factors.get(0))){
-                all_factors.add(factors.get(0));
+            if (!allFactors.contains(factors.get(0))) {
+                allFactors.add(factors.get(0));
             }
             return factors.get(0);
         }
@@ -202,8 +204,8 @@ public class VariableElimination {
         second.printFactor();
 
         //removing them from the factors list
-        all_factors.remove(first);
-        all_factors.remove(second);
+        allFactors.remove(first);
+        allFactors.remove(second);
 
         // swap them by size so that the smaller is first
         if (first.getFactorTable().size() > second.getFactorTable().size()) {
@@ -213,9 +215,9 @@ public class VariableElimination {
         }
 
         // get the corresponding values of common parameters
-        ArrayList<Integer> matching_values = new ArrayList<>();
+        ArrayList<Integer> matchingValues = new ArrayList<>();
         for (BayesNode param : first.getVariables()) {
-            matching_values.add(second.getVariables().indexOf(param));
+            matchingValues.add(second.getVariables().indexOf(param));
         }
 
         Factor newFactor = new Factor(first, second);
@@ -224,12 +226,12 @@ public class VariableElimination {
             // Find the matching rows of the second factor
             for (ArrayList<String> key2 : second.getFactorTable().keySet()) {
                 boolean match = true;
-                for (int i = 0; i < matching_values.size(); i++) {
-                    if (matching_values.get(i) == -1) { // if the parameter is not in the second factor
+                for (int i = 0; i < matchingValues.size(); i++) {
+                    if (matchingValues.get(i) == -1) { // if the parameter is not in the second factor
                         continue;
                     }
                     String value1 = key.get(i); // The value of the joined parameter in the first factor
-                    String value2 = key2.get(matching_values.get(i)); // The value of the joined parameter in the second factor
+                    String value2 = key2.get(matchingValues.get(i)); // The value of the joined parameter in the second factor
 
                     if (!value1.equals(value2)) {// if the rows are matching we can multiply the values into the new factor
                         match = false;
@@ -237,58 +239,61 @@ public class VariableElimination {
                     }
                 }
 
-                if (match){ // if the whole row matches
-                    ArrayList<String> new_key = create_new_key(key, key2, first, second, newFactor);
-                    newFactor.getFactorTable().put(new_key, first.getFactorTable().get(key) * second.getFactorTable().get(key2));
+                if (match) { // if the whole row matches
+                    ArrayList<String> newKey = createNewKey(key, key2, first, second, newFactor);
+                    newFactor.getFactorTable().put(newKey, first.getFactorTable().get(key) * second.getFactorTable().get(key2));
                     this.mulOperations++;
                 }
             }
         }
         // New factor list with the new one instead of the two old ones
-        ArrayList<Factor> new_factors = new ArrayList<>();
+        ArrayList<Factor> newFactors = new ArrayList<>();
         System.out.print("New factor");
         newFactor.printFactor();
-        new_factors.add(newFactor);
+        newFactors.add(newFactor);
         for (int i = 2; i < factors.size(); i++) {
-            new_factors.add(factors.get(i));
+            newFactors.add(factors.get(i));
         }
-        return join(new_factors, all_factors);
+        return factorJoin(newFactors, allFactors);
     }
 
     /**
      * Get all the factors that are relevant to the query
+     *
      * @return the list of the factors that are relevant to the query
      */
-    private ArrayList<Factor> get_relevant_factors() {
-        ArrayList<Factor> relevant_factors = new ArrayList<>();
+    private ArrayList<Factor> getRelevantFactors() {
+        ArrayList<Factor> relevantFactors = new ArrayList<>();
         for (BayesNode n : this.RelevantNodes) {
             if (n.factor.getFactorTable().size() > 1) {
-                relevant_factors.add(n.factor);
+                relevantFactors.add(n.factor);
             }
         }
-        return relevant_factors;
+        return relevantFactors;
     }
 
     /**
      * Get all the factors that are relevant to the query
-     * @param node the node that we want to get the factors for
+     *
+     * @param node    the node that we want to get the factors for
      * @param factors the list of all the factors
      * @return the list of the factors that are relevant to the node
      */
-    private ArrayList<Factor> get_relevant_factors(BayesNode node, ArrayList<Factor> factors) {
-        ArrayList<Factor> relevant_factors = new ArrayList<>();
+    private ArrayList<Factor> getRelevantFactors(BayesNode node, ArrayList<Factor> factors) {
+        ArrayList<Factor> relevantFactors = new ArrayList<>();
         for (Factor f : factors) {
             if (f.getVariables().contains(node)) {
-                relevant_factors.add(f);
+                relevantFactors.add(f);
             }
         }
-        return relevant_factors;
+        return relevantFactors;
     }
 
     /**
      * Iterate over all the nodes and reduce their given values
+     * by collapsing the factors
      */
-    private void given_reduction() {
+    private void givenReduction() {
 
         for (BayesNode node : this.RelevantNodes) {
             ArrayList<BayesNode> temp = (ArrayList<BayesNode>) node.factor.getVariables().clone();
@@ -296,7 +301,7 @@ public class VariableElimination {
                 if (this.GivenNodes.contains(factorParam) && node.factor.getVariables().contains(factorParam)) {
                     System.out.println("Factor before collapse: ");
                     node.factor.printFactor();
-                    node.collapse_given(factorParam, factorParam.givenOutcome);
+                    node.collapseGiven(factorParam, factorParam.givenOutcome);
                     System.out.println("Factor after collapse: ");
                     node.factor.printFactor();
                 }
@@ -306,15 +311,16 @@ public class VariableElimination {
 
     /**
      * Process the query string and extract the variables
+     *
      * @param network the network
-     * @param query the query string
+     * @param query   the query string
      */
     private void ProcessQueryString(BayesNet network, String query) {
         String paramString = query.split("\\(")[1]; //P(A=T|B=T,C=F) E-M -> A|B=T,C=F) E-M
         String HiddenVar = paramString.split("\\)")[1]; // -> E-M
         paramString = paramString.split("\\)")[0]; // -> A=T|B=T,C=F
         String GivenVar = "";
-        if (paramString.split("\\|").length == 2){ // if there is a given variable
+        if (paramString.split("\\|").length == 2) { // if there is a given variable
             GivenVar = paramString.split("\\|")[1]; // -> B=T,C=F
         }
         paramString = paramString.split("\\|")[0]; // -> A=T
@@ -347,46 +353,48 @@ public class VariableElimination {
     /**
      * Eliminate the nodes that are not a parent of the query node or a given node
      */
-    private void eliminate_useless_nodes() {
+    private void eliminateUselessNodes() {
         for (BayesNode node : this.GivenNodes) {
-            eliminate_useless_nodes_recursive(node);
+            eliminateUselessNodesRec(node);
         }
-        eliminate_useless_nodes_recursive(this.queryNode);
+        eliminateUselessNodesRec(this.queryNode);
     }
 
     /**
-     * The recursive part of eliminate_useless_nodes
-     * @param node the node to eliminate
+     * Eliminate the nodes that are not a parent of the given node
+     *
+     * @param node the node to eliminate the parents of
      */
-    private void eliminate_useless_nodes_recursive(BayesNode node) {
+    private void eliminateUselessNodesRec(BayesNode node) {
         if (!this.RelevantNodes.contains(node)) {
             this.RelevantNodes.add(node);
         }
 
         for (BayesNode parent : node.getParents()) {
-            eliminate_useless_nodes_recursive(parent);
+            eliminateUselessNodesRec(parent);
         }
     }
 
     /**
      * Create a new key for the new factor
-     * @param key the key of the first factor
-     * @param key2 the key of the second factor
-     * @param first the first factor
-     * @param second the second factor
+     *
+     * @param key       the key of the first factor
+     * @param key2      the key of the second factor
+     * @param first     the first factor
+     * @param second    the second factor
      * @param newFactor the new factor
-     * @return  the new key
+     * @return the new key
      */
-    private ArrayList<String> create_new_key(ArrayList<String> key, ArrayList<String> key2, Factor first, Factor second, Factor newFactor) {
-        ArrayList<String> new_key = new ArrayList<>();
+    private ArrayList<String> createNewKey(ArrayList<String> key, ArrayList<String> key2, Factor first, Factor second, Factor newFactor) {
+        ArrayList<String> newKey = new ArrayList<>();
         // iterating aver all the parameters of the new factor
         for (BayesNode param : newFactor.getVariables()) {
             if (first.getVariables().contains(param)) {
-                new_key.add(key.get(first.getVariables().indexOf(param))); // add the value for the parameter
+                newKey.add(key.get(first.getVariables().indexOf(param))); // add the value for the parameter
             } else {
-                new_key.add(key2.get(second.getVariables().indexOf(param)));
+                newKey.add(key2.get(second.getVariables().indexOf(param)));
             }
         }
-        return new_key;
+        return newKey;
     }
 }

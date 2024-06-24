@@ -28,7 +28,7 @@ public class BayesNode {
     public void addChild(BayesNode child){
         children.add(child);
     }
-    public void collapse_given(BayesNode node, String givenVal){
+    public void collapseGiven(BayesNode node, String givenVal){
         System.out.println("factor before collapse: ");
         factor.printFactor();
         this.factor.updateGiven(givenVal, node);
