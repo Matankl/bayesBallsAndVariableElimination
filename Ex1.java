@@ -8,20 +8,20 @@ import java.io.*;
 // 5. CPT class to store the conditional probability table
 
 public class Ex1 {
-
     public static void main(String[] args) {
         File file = new File("input.txt");
         String output_path = "output.txt";
         BayesNet bayesNet = null;
         VariableElimination ve = new VariableElimination();
 
-        if (args.length == 2) {
-            file = new File(args[0]);
-            output_path = args[1];
-        } else {
-            System.err.println("Invalid number of arguments. Please provide the input file path.");
-            return;
-        }
+//       // test runing parameters
+//        if (args.length == 2) {
+//            file = new File(args[0]);
+//            output_path = args[1];
+//        } else {
+//            System.err.println("Invalid number of arguments. Please provide the input file path.");
+//            return;
+//        }
 
         File outputFile = new File(output_path);
 
@@ -58,10 +58,7 @@ public class Ex1 {
                     veResult = Math.round(veResult * 100000f) / 100000f;
                     String StrResult = veResult + "0000000";
 //                    System.out.println(StrResult.substring(0, 7) + "," + ve.sumOperations + "," + ve.mulOperations);
-                    BW.write(StrResult.substring(0, 7) + "," + ve.sumOperations + "," + ve.mulOperations);
-
-
-
+                    BW.write(StrResult.substring(0, 7) + "," + ve.sumOperations + "," + ve.mulOperations + "\n");
 
                 }else{                                                              //Bayes Ball
                     String[] given = {};
@@ -78,23 +75,13 @@ public class Ex1 {
                         }
                     }
 //                    System.out.println(bayesNet.isIndependent(startAndStop[0],startAndStop[1],given));
-                    BW.write(bayesNet.isIndependent(startAndStop[0],startAndStop[1],given)+"");
-
-
-
+                    String ans = bayesNet.isIndependent(startAndStop[0],startAndStop[1],given) ? "yes" : "no";
+                    BW.write(ans + "\n");
                 }
             }
+            BW.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
-
-        //parse the queries
-
-
-
-
     }
-
 }

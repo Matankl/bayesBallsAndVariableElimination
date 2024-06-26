@@ -100,7 +100,6 @@ public class XMLParser {
         return bayesNet;
     }
 
-
     public BayesNet getNet(){
         return bayesNet;
     }

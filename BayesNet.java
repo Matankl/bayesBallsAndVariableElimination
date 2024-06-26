@@ -1,6 +1,5 @@
 // this it the class contains the bayesian network
 // it contains the nodes of the network
-
 import java.util.HashSet;
 
 
@@ -110,26 +109,6 @@ public class BayesNet {
     /*_________________________________________ end of Bayes ball area______________________________________________________*/
 
     /*_________________________________________ variable elimination area______________________________________________________*/
-    // 1. make a list of the nodes just parents of the query node and given nodes
-//    public Float nodesReduction(String[] given, BayesNode query) {
-//        // make a list of the nodes just parents of the query node and given nodes
-//        HashSet<BayesNode> variables = new HashSet<BayesNode>();
-//        for(String givenNode : given){
-//            variables = addParentsAndMe(this.getNode(givenNode), variables);
-//        }
-//        variables = addParentsAndMe(query, variables);
-//
-//
-//        // 2. remove the independent nodes from the list using bayes ball
-//        for(BayesNode node : variables){
-//            if(isIndependent(query.getName(), node.getName(), given)){
-//                variables.remove(node);
-//            }
-//        }
-//        // 3.
-//
-//        return
-//    }
     void givenUpdate(String query) {
         // extracting the Given part
         String[] givenString = query.split("\\|");

@@ -56,8 +56,4 @@ public class BayesNode {
     public void setFactor(Factor factor){
         this.factor = factor;
     }
-
-
-
-
 }
